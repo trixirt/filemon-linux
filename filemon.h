@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Juniper Networks, Inc.
+ * Copyright (c) 2013-2016, Juniper Networks, Inc.
  * All rights reserved.
  *
  * You may distribute under the terms of any of:
@@ -114,9 +114,42 @@
 /* Uncomment to print user's fd to syslog */
 /* #define FILEMON_PRINT_USER_FD */
 
-/* linux/fs.h getname changed in 3.6.0 */
 #include <linux/version.h>
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 6, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0)
+/*
+  commit 9115eac2c788c17b57c9256cb322fa7371972ddf
+  Author: Jeff Layton <jlayton@redhat.com>
+  Date:   Mon Jan 27 13:33:28 2014 -0500
+
+  vfs: unexport the getname() symbol
+    
+  Leaving getname() exported when putname() isn't is a bad idea.
+  
+  Signed-off-by: Jeff Layton <jlayton@redhat.com>
+  Signed-off-by: Al Viro <viro@zeniv.linux.org.uk>
+*/
+
+/* Doing our own thing now.. */
+#define FILEMON_GETNAME_TYPE const char *
+#define FILEMON_GETNAME(f) _filemon_getname(f)
+#define FILEMON_GETNAME_NAME(f) (f)
+#define FILEMON_PUTNAME(f) (f)
+
+static inline char * _filemon_getname(const char *ptr) {
+  /*
+   * There are at most 2 outstanding calls to getname at a time
+   * Instead of allocating memory, rotate through the array;
+   */
+  static unsigned int index;
+  static char f[2][PATH_MAX];
+  index++;
+  index &= 1;
+  f[index][0] = '\0';
+  strncpy_from_user(f[index], ptr, PATH_MAX);
+  return &f[index][0];
+}
+
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(3, 6, 0)
 /*
    commit 91a27b2a756784714e924e5e854b919273082d26
    Author: Jeff Layton <jlayton@redhat.com>
