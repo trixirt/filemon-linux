@@ -1,0 +1,23 @@
+From 502a7494fe1f76c195331d4053912971d00e5408 Mon Sep 17 00:00:00 2001
+From: Tom Rix <trix@juniper.net>
+Date: Sun, 24 Jan 2016 14:00:48 -0800
+Subject: [PATCH] linux 3.15 export sys_enter and sys_exit for filemon
+
+---
+ kernel/trace/trace_syscalls.c |    3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/kernel/trace/trace_syscalls.c b/kernel/trace/trace_syscalls.c
+index 759d5e0..7e8592d 100644
+--- a/kernel/trace/trace_syscalls.c
++++ b/kernel/trace/trace_syscalls.c
+@@ -760,3 +760,6 @@ static int syscall_exit_register(struct ftrace_event_call *event,
+ 	}
+ 	return 0;
+ }
++
++EXPORT_TRACEPOINT_SYMBOL_GPL(sys_enter);
++EXPORT_TRACEPOINT_SYMBOL_GPL(sys_exit);
+-- 
+1.7.9.5
+
